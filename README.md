@@ -1,7 +1,6 @@
 # lisp-mtx
 Common Lisp Matrix Library
 
-<<<<<<< HEAD
 # Notes
 
 This project contains my 3D vector and matrix library in Common Lisp.
@@ -55,6 +54,3 @@ to accomplish this.
 **mail:** david-wellsted@outlook.com
 
 ---
-=======
-See master branch for the latest.
->>>>>>> cf763b7d2840024f7f645a89d4b95764a7149cb9
