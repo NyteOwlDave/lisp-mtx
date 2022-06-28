@@ -270,16 +270,17 @@
     (setf out (vec-cross t1 t2))
   out))
 
+; [TO-DO]
 (defun mtx-inverse (m)
   "create inverse matrix"
   nil)
 
-; mtx-luindx
+; [TO-DO]
 (defun mtx-det (m) 
   "Determinant"
   nil)
 
-; mtx-lubksb
+; [TO-DO]
 (defun mtx-adjunct (m) 
   "Adjunct matrix"
   nil)
