@@ -10,11 +10,10 @@
 ; mtx-scale mtx-translate mtx-transform mtx-quat
 ; mtx-lookat mtx-copy mtx-transpose 
 ; mtx-cat mtx-trans-vector mtx-trans-normal
+; mtx-inverse mtx-det mtx-adjunct mtx-scale-by
 
-; [TODO]
-; mtx-inverse
-; mtx-det
-; mtx-adjunct
+(define-condition on-determinant-too-small (error)
+   ((message :initarg :message :reader message)))
 
 (defun mtxp (m)
   "matrix predicate"
@@ -270,17 +269,91 @@
     (setf out (vec-cross t1 t2))
   out))
 
-; [TO-DO]
 (defun mtx-inverse (m)
   "create inverse matrix"
-  nil)
+  (let* ((det (mtx_det m))
+         (absdet (abs det)))
+        (if (< absdet *vec-epsilon*) 
+          (error 'on-determinant-too-small :message "determinant is too small")
+          (mtx-scale-by m (/ 1 det)))))
 
-; [TO-DO]
 (defun mtx-det (m) 
-  "Determinant"
-  nil)
+  "determinant"
+  (let ((m00 (mtx-cell-read 0 0))
+        (m01 (mtx-cell-read 0 1))
+        (m02 (mtx-cell-read 0 2))
+        (m03 (mtx-cell-read 0 3))
+        (m10 (mtx-cell-read 1 0))
+        (m11 (mtx-cell-read 1 1))
+        (m12 (mtx-cell-read 1 2))
+        (m13 (mtx-cell-read 1 3))
+        (m20 (mtx-cell-read 2 0))
+        (m21 (mtx-cell-read 2 1))
+        (m22 (mtx-cell-read 2 2))
+        (m23 (mtx-cell-read 2 3))
+        (m30 (mtx-cell-read 3 0))
+        (m31 (mtx-cell-read 3 1))
+        (m32 (mtx-cell-read 3 2))
+        (m33 (mtx-cell-read 3 3)))
+        (+ (* m03 m12 m21 m30) (- (* m02 m13 m21 m30)) (- (* m03 m11 m22 m30)) (* m01 m13 m22 m30)
+           (* m02 m11 m23 m30) (- (* m01 m12 m23 m30)) (- (* m03 m12 m20 m31)) (* m02 m13 m20 m31)
+           (* m03 m10 m22 m31) (- (* m00 m13 m22 m31)) (- (* m02 m10 m23 m31)) (* m00 m12 m23 m31)
+           (* m03 m11 m20 m32) (- (* m01 m13 m20 m32)) (- (* m03 m10 m21 m32)) (* m00 m13 m21 m32)
+           (* m01 m10 m23 m32) (- (* m00 m11 m23 m32)) (- (* m02 m11 m20 m33)) (* m01 m12 m20 m33)
+           (* m02 m10 m21 m33) (- (* m00 m12 m21 m33)) (- (* m01 m10 m22 m33)) (* m00 m11 m22 m33))))
 
-; [TO-DO]
 (defun mtx-adjunct (m) 
-  "Adjunct matrix"
-  nil)
+  "adjunct matrix"
+  (let* ((m00 (mtx-cell-read 0 0))
+         (m01 (mtx-cell-read 0 1))
+         (m02 (mtx-cell-read 0 2))
+         (m03 (mtx-cell-read 0 3))
+         (m10 (mtx-cell-read 1 0))
+         (m11 (mtx-cell-read 1 1))
+         (m12 (mtx-cell-read 1 2))
+         (m13 (mtx-cell-read 1 3))
+         (m20 (mtx-cell-read 2 0))
+         (m21 (mtx-cell-read 2 1))
+         (m22 (mtx-cell-read 2 2))
+         (m23 (mtx-cell-read 2 3))
+         (m30 (mtx-cell-read 3 0))
+         (m31 (mtx-cell-read 3 1))
+         (m32 (mtx-cell-read 3 2))
+         (m33 (mtx-cell-read 3 3))
+         (a (+ (* m12 m23 m31) (- (* m13 m22 m31)) (* m13 m21 m32) (- (* m11 m23 m32)) (- (* m12 m21 m33)) (* m11 m22 m33)))
+         (b (+ (* m03 m22 m31) (- (* m02 m23 m31)) (- (* m03 m21 m32)) (* m01 m23 m32) (* m02 m21 m33) (- (* m01 m22 m33))))
+         (c (+ (* m02 m13 m31) (- (* m03 m12 m31)) (* m03 m11 m32) (- (* m01 m13 m32)) (- (* m02 m11 m33)) (* m01 m12 m33)))
+         (d (+ (* m03 m12 m21) (- (* m02 m13 m21)) (- (* m03 m11 m22)) (* m01 m13 m22) (* m02 m11 m23) (- (* m01 m12 m23))))
+         (e (+ (* m13 m22 m30) (- (* m12 m23 m30)) (- (* m13 m20 m32)) (* m10 m23 m32) (* m12 m20 m33) (- (* m10 m22 m33))))
+         (f (+ (* m02 m23 m30) (- (* m03 m22 m30)) (* m03 m20 m32) (- (* m00 m23 m32)) (- (* m02 m20 m33)) (* m00 m22 m33)))
+         (g (+ (* m03 m12 m30) (- (* m02 m13 m30)) (- (* m03 m10 m32)) (* m00 m13 m32) (* m02 m10 m33) (- (* m00 m12 m33))))
+         (h (+ (* m02 m13 m20) (- (* m03 m12 m20)) (* m03 m10 m22) (- (* m00 m13 m22)) (- (* m02 m10 m23)) (* m00 m12 m23)))
+         (i (+ (* m11 m23 m30) (- (* m13 m21 m30)) (* m13 m20 m31) (- (* m10 m23 m31)) (- (* m11 m20 m33)) (* m10 m21 m33)))
+         (j (+ (* m03 m21 m30) (- (* m01 m23 m30)) (- (* m03 m20 m31)) (* m00 m23 m31) (* m01 m20 m33) (- (* m00 m21 m33))))
+         (k (+ (* m01 m13 m30) (- (* m03 m11 m30)) (* m03 m10 m31) (- (* m00 m13 m31)) (- (* m01 m10 m33)) (* m00 m11 m33)))
+         (l (+ (* m03 m11 m20) (- (* m01 m13 m20)) (- (* m03 m10 m21)) (* m00 m13 m21) (* m01 m10 m23) (- (* m00 m11 m23))))
+         (m (+ (* m12 m21 m30) (- (* m11 m22 m30)) (- (* m12 m20 m31)) (* m10 m22 m31) (* m11 m20 m32) (- (* m10 m21 m32))))
+         (n (+ (* m01 m22 m30) (- (* m02 m21 m30)) (* m02 m20 m31) (- (* m00 m22 m31)) (- (* m01 m20 m32)) (* m00 m21 m32)))
+         (o (+ (* m02 m11 m30) (- (* m01 m12 m30)) (- (* m02 m10 m31)) (* m00 m12 m31) (* m01 m10 m32) (- (* m00 m11 m32))))
+         (p (+ (* m01 m12 m20) (- (* m02 m11 m20)) (* m02 m10 m21) (- (* m00 m12 m21)) (- (* m01 m10 m22)) (* m00 m11 m22))))
+        (mtx a b c d e f g h i j k l m n o p)))
+
+(defun mtx-scale-by (m k) 
+  "scale matrix uniformly"
+  (let ((a (* (mtx-cell_read 0 0) k))
+        (b (* (mtx-cell_read 0 1) k))
+        (c (* (mtx-cell_read 0 2) k))
+        (d (* (mtx-cell_read 0 3) k))
+        (e (* (mtx-cell_read 1 0) k))
+        (f (* (mtx-cell_read 1 1) k))
+        (g (* (mtx-cell_read 1 2) k))
+        (h (* (mtx-cell_read 1 3) k))
+        (i (* (mtx-cell_read 2 0) k))
+        (j (* (mtx-cell_read 2 1) k))
+        (k (* (mtx-cell_read 2 2) k))
+        (l (* (mtx-cell_read 2 3) k))
+        (m (* (mtx-cell_read 3 0) k))
+        (n (* (mtx-cell_read 4 1) k))
+        (o (* (mtx-cell_read 3 2) k))
+        (p (* (mtx-cell_read 3 3) k)))
+       (mtx a b c d e f g h i j k l m n o p)))
